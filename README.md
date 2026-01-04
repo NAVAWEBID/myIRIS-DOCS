@@ -1,4 +1,4 @@
-# myIRIS Docs
+# myIRIS DOCS
 
 > [!NOTE]
 > This is a custom, updated fork of Docmost, optimized for personal and educational use, especially for sharing with multiple different users. It also includes features that Docmost is either "too" slow to add or chooses not to include, sometimes because they are behind a paywall or because Docmost aims to "keep it simple." (No judgment)
