@@ -1,26 +1,23 @@
-import { Badge, Group, Text, Tooltip } from "@mantine/core";
-import classes from "./app-header.module.css";
-import React from "react";
-import TopMenu from "@/components/layouts/global/top-menu.tsx";
-import { Link } from "react-router-dom";
-import APP_ROUTE from "@/lib/app-route.ts";
-import { useAtom } from "jotai";
 import {
   desktopSidebarAtom,
   mobileSidebarAtom,
 } from "@/components/layouts/global/hooks/atoms/sidebar-atom.ts";
 import { useToggleSidebar } from "@/components/layouts/global/hooks/hooks/use-toggle-sidebar.ts";
+import TopMenu from "@/components/layouts/global/top-menu.tsx";
 import SidebarToggle from "@/components/ui/sidebar-toggle-button.tsx";
-import { useTranslation } from "react-i18next";
-import { isCloud } from "@/lib/config.ts";
 import {
   SearchControl,
   SearchMobileControl,
 } from "@/features/search/components/search-control.tsx";
 import {
-  searchSpotlight,
-  shareSearchSpotlight,
+  searchSpotlight
 } from "@/features/search/constants.ts";
+import APP_ROUTE from "@/lib/app-route.ts";
+import { Group, Text, Tooltip } from "@mantine/core";
+import { useAtom } from "jotai";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import classes from "./app-header.module.css";
 
 const links = [{ link: APP_ROUTE.HOME, label: "Home" }];
 
@@ -77,7 +74,7 @@ export function AppHeader() {
             component={Link}
             to="/home"
           >
-            {import.meta.env.VITE_APP_NAME || "Forkmost"}
+            {import.meta.env.VITE_APP_NAME || "myIRIS Docs"}
           </Text>
 
           <Group ml={50} gap={5} className={classes.links} visibleFrom="sm">

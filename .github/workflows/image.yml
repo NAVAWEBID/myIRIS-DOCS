@@ -4,12 +4,12 @@ on:
   push:
     branches: ["personal"]
     tags:
-      - 'v*.*.*.*'
+      - "v*.*.*.*"
     paths:
-      - 'apps/**'
-      - 'packages/**'
-      - 'patches/**'
-      - 'Dockerfile'
+      - "apps/**"
+      - "packages/**"
+      - "patches/**"
+      - "Dockerfile"
   workflow_dispatch:
 
 concurrency:
@@ -62,8 +62,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/vito0912/forkmost
-            vito0912/forkmost
+            ghcr.io/NAVAWEBID/myIRIS-DOCS
+            NAVAWEBID/myIRIS-DOCS
           tags: |
             # Always
             type=raw,value=dev
@@ -80,5 +80,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: |
-            org.opencontainers.image.title=Forkmost
-            org.opencontainers.image.description=Forkmost is a open-source collaborative wiki and documentation software with no paywalled features.
+            org.opencontainers.image.title=myIRIS Docs
+            org.opencontainers.image.description=myIRIS Docs is a open-source collaborative wiki and documentation software with no paywalled features.

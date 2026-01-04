@@ -1,8 +1,8 @@
-import { Title, Text, Button, Container, Group } from "@mantine/core";
-import classes from "./error-404.module.css";
-import { Link } from "react-router-dom";
+import { Button, Container, Group, Text, Title } from "@mantine/core";
 import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import classes from "./error-404.module.css";
 
 export function Error404() {
   const { t } = useTranslation();
@@ -10,7 +10,7 @@ export function Error404() {
   return (
     <>
       <Helmet>
-        <title>{t("404 page not found")} - Forkmost</title>
+        <title>{t("404 page not found")} - myIRIS Docs</title>
       </Helmet>
       <Container className={classes.root}>
         <Title className={classes.title}>{t("404 page not found")}</Title>

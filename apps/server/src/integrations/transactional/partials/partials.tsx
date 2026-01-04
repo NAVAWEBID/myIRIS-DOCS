@@ -1,14 +1,14 @@
-import { container, footer, h1, logo, main } from '../css/styles';
 import {
-  Body,
-  Container,
-  Head,
-  Html,
-  Row,
-  Section,
-  Text,
+    Body,
+    Container,
+    Head,
+    Html,
+    Row,
+    Section,
+    Text,
 } from '@react-email/components';
 import * as React from 'react';
+import { container, footer, logo, main } from '../css/styles';
 
 interface MailBodyProps {
   children: React.ReactNode;
@@ -40,7 +40,7 @@ export function MailFooter() {
     <Section style={footer}>
       <Row>
         <Text style={{ textAlign: 'center', color: '#706a7b' }}>
-          {new Date().getFullYear()} Forkmost, open-source collaborative wiki and documentation <br />
+          {new Date().getFullYear()} myIRIS Docs, open-source collaborative wiki and documentation <br />
         </Text>
       </Row>
     </Section>

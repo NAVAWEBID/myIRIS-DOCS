@@ -1,10 +1,9 @@
+import classes from "@/components/settings/settings.module.css";
 import { useAppVersion } from "@/features/workspace/queries/workspace-query.ts";
 import { isCloud } from "@/lib/config.ts";
-import classes from "@/components/settings/settings.module.css";
 import { Indicator, Text, Tooltip } from "@mantine/core";
-import React from "react";
-import semverGt from "semver/functions/gt";
 import { useTranslation } from "react-i18next";
+import semverGt from "semver/functions/gt";
 
 export default function AppVersion() {
   const { t } = useTranslation();
@@ -50,7 +49,7 @@ export default function AppVersion() {
             href="https://github.com/vito0912/forkmost/releases"
             target="_blank"
           >
-            v{APP_VERSION} - Forkmost
+            v{APP_VERSION} - myIRIS Docs
           </Text>
         </Indicator>
       </Tooltip>

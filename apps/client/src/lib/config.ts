@@ -1,6 +1,6 @@
-import bytes from "bytes";
-import { castToBoolean } from "@/lib/utils.tsx";
 import { AvatarIconType } from "@/features/attachments/types/attachment.types.ts";
+import { castToBoolean } from "@/lib/utils.tsx";
+import bytes from "bytes";
 
 declare global {
   interface Window {
@@ -9,7 +9,7 @@ declare global {
 }
 
 export function getAppName(): string {
-  return "Forkmost";
+  return "myIRIS Docs";
 }
 
 export function getAppUrl(): string {

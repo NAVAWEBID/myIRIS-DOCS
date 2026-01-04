@@ -9,7 +9,7 @@ export default function ShareBranding() {
         target="_blank"
         href="https://github.com/Vito0912/forkmost"
       >
-        Powered by Forkmost
+        Powered by myIRIS Docs
       </Button>
     </Affix>
   );

@@ -1,43 +1,42 @@
-import React, { useEffect, useMemo } from "react";
 import {
-  ActionIcon,
-  AppShell,
-  Group,
-  ScrollArea,
-  Text,
-  Tooltip
-} from "@mantine/core";
-import { useGetSharedPageTreeQuery } from "@/features/share/queries/share-query.ts";
-import { Link, useParams } from "react-router-dom";
-import SharedTree from "@/features/share/components/shared-tree.tsx";
-import { TableOfContents } from "@/features/editor/components/table-of-contents/table-of-contents.tsx";
-import { readOnlyEditorAtom } from "@/features/editor/atoms/editor-atoms.ts";
-import { ThemeToggle } from "@/components/ui/theme-toggle.tsx";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useAtom } from "jotai";
-import { sharedPageTreeAtom, sharedTreeDataAtom } from "@/features/share/atoms/shared-page-atom";
-import { buildSharedPageTree } from "@/features/share/utils";
-import {
-  desktopSidebarAtom,
-  mobileSidebarAtom,
+    desktopSidebarAtom,
+    mobileSidebarAtom,
 } from "@/components/layouts/global/hooks/atoms/sidebar-atom.ts";
-import SidebarToggle from "@/components/ui/sidebar-toggle-button.tsx";
-import { useTranslation } from "react-i18next";
 import { useToggleSidebar } from "@/components/layouts/global/hooks/hooks/use-toggle-sidebar.ts";
+import { FullWidthToggle } from "@/components/ui/full-width-toggle";
+import SidebarToggle from "@/components/ui/sidebar-toggle-button.tsx";
+import { ThemeToggle } from "@/components/ui/theme-toggle.tsx";
+import { readOnlyEditorAtom } from "@/features/editor/atoms/editor-atoms.ts";
+import { TableOfContents } from "@/features/editor/components/table-of-contents/table-of-contents.tsx";
 import {
-  mobileTableOfContentAsideAtom,
-  tableOfContentAsideAtom,
-} from "@/features/share/atoms/sidebar-atom.ts";
-import { IconList } from "@tabler/icons-react";
-import { useToggleToc } from "@/features/share/hooks/use-toggle-toc.ts";
-import classes from "./share.module.css";
-import {
-  SearchControl,
-  SearchMobileControl,
+    SearchControl,
+    SearchMobileControl,
 } from "@/features/search/components/search-control.tsx";
 import { ShareSearchSpotlight } from "@/features/search/components/share-search-spotlight.tsx";
 import { shareSearchSpotlight } from "@/features/search/constants";
-import { FullWidthToggle } from "@/components/ui/full-width-toggle";
+import { sharedPageTreeAtom, sharedTreeDataAtom } from "@/features/share/atoms/shared-page-atom";
+import {
+    mobileTableOfContentAsideAtom,
+    tableOfContentAsideAtom,
+} from "@/features/share/atoms/sidebar-atom.ts";
+import SharedTree from "@/features/share/components/shared-tree.tsx";
+import { useToggleToc } from "@/features/share/hooks/use-toggle-toc.ts";
+import { useGetSharedPageTreeQuery } from "@/features/share/queries/share-query.ts";
+import { buildSharedPageTree } from "@/features/share/utils";
+import {
+    ActionIcon,
+    AppShell,
+    Group,
+    ScrollArea,
+    Text,
+    Tooltip
+} from "@mantine/core";
+import { IconList } from "@tabler/icons-react";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import React, { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useParams } from "react-router-dom";
+import classes from "./share.module.css";
 
 const MemoizedSharedTree = React.memo(SharedTree);
 
@@ -131,7 +130,7 @@ export default function ShareShell({
               size="lg"
               fw={600}
             >
-              {import.meta.env.VITE_APP_NAME || "Forkmost"}
+              {import.meta.env.VITE_APP_NAME || "myIRIS Docs"}
             </Text>
           </Group>
 

@@ -12,10 +12,10 @@ body:
   - type: markdown
     attributes:
       value: >-
-        
+
         Please use this issue template if you have a request to add or change a feature. Only open a feature request issue here if at least one of the following applies:
 
-        * The feature request is directly related to a PR added in Forkmost but is not available in Docmost
+        * The feature request is directly related to a PR added in myIRIS Docs but is not available in Docmost
 
         * The feature request was already opened in the Docmost repo but was either closed or left without any response from the maintainers for more than 3 months
 
@@ -26,11 +26,12 @@ body:
     id: checkboxes-0
     attributes:
       label: Please tick the ones that fit best. You must tick at least one.
-      description: To make sure this issue is related to Forkmost, please tick at
+      description:
+        To make sure this issue is related to myIRIS Docs, please tick at
         least one of the following option
       options:
-        - label: The feature request is directly related to a PR added in Forkmost but is not available in Docmost
-        - label: The feature request was already opened in the Docmost repo but was either closed or left without any response from the maintainers for more than 3 months  
+        - label: The feature request is directly related to a PR added in myIRIS Docs but is not available in Docmost
+        - label: The feature request was already opened in the Docmost repo but was either closed or left without any response from the maintainers for more than 3 months
         - label: The feature request was opened in Docmost and I want to link it
         - label: The feature request is small and probably won't get fixed in Docmost
     validations:
@@ -59,7 +60,7 @@ body:
   - type: input
     id: input-1
     attributes:
-      label: Forkmost version
+      label: myIRIS Docs version
       placeholder: e.g. v0.23.1.1
     validations:
       required: true

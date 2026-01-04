@@ -12,10 +12,10 @@ body:
   - type: markdown
     attributes:
       value: >-
-        
+
         Please use this issue template if you have a bug to report. Only open a bug report issue here if at least one of the following applies:
 
-        * The bug is directly related to a PR added in Forkmost but is not available in Docmost
+        * The bug is directly related to a PR added in myIRIS Docs but is not available in Docmost
 
         * The bug was already opened in the Docmost repo but was either closed or left without any response from the maintainers for more than 3 months
 
@@ -26,10 +26,11 @@ body:
     id: checkboxes-0
     attributes:
       label: Please tick the ones that fit best. You must tick at least one.
-      description: To make sure this issue is related to Forkmost, please tick at
+      description:
+        To make sure this issue is related to myIRIS Docs, please tick at
         least one of the following option
       options:
-        - label: The bug is directly related to a PR added in Forkmost but is not available in Docmost
+        - label: The bug is directly related to a PR added in myIRIS Docs but is not available in Docmost
         - label: The bug was already opened in the Docmost repo but was either closed or left without any response from the maintainers for more than 3 months
         - label: The bug is small and probably won't get fixed in Docmost
         - label: The bug was opened in Docmost and I want to link it
@@ -52,7 +53,7 @@ body:
   - type: input
     id: input-1
     attributes:
-      label: Forkmost version
+      label: myIRIS Docs version
       placeholder: e.g. v0.23.1.1
     validations:
       required: true
