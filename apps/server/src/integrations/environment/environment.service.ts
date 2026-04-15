@@ -259,6 +259,12 @@ export class EnvironmentService {
     );
   }
 
+  getAiEmbeddingSupportsMrl(): boolean | undefined {
+    const val = this.configService.get<string>('AI_EMBEDDING_SUPPORTS_MRL');
+    if (val === undefined || val === null || val === '') return undefined;
+    return val === 'true';
+  }
+
   getOpenAiApiKey(): string {
     return this.configService.get<string>('OPENAI_API_KEY');
   }
@@ -276,5 +282,15 @@ export class EnvironmentService {
       'OLLAMA_API_URL',
       'http://localhost:11434',
     );
+  }
+
+  getEventStoreDriver(): string {
+    return this.configService
+      .get<string>('EVENT_STORE_DRIVER', 'postgres')
+      .toLowerCase();
+  }
+
+  getClickHouseUrl(): string {
+    return this.configService.get<string>('CLICKHOUSE_URL');
   }
 }

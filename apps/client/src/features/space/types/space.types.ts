@@ -6,6 +6,19 @@ import {
 import { ExportFormat } from "@/features/page/types/page.types.ts";
 import { LinkObject, NodeObject } from "react-force-graph-2d";
 
+export interface ISpaceSharingSettings {
+  disabled?: boolean;
+}
+
+export interface ISpaceCommentsSettings {
+  allowViewerComments?: boolean;
+}
+
+export interface ISpaceSettings {
+  sharing?: ISpaceSharingSettings;
+  comments?: ISpaceCommentsSettings;
+}
+
 export interface ISpace {
   id: string;
   name: string;
@@ -19,6 +32,10 @@ export interface ISpace {
   memberCount?: number;
   spaceId?: string;
   membership?: IMembership;
+  settings?: ISpaceSettings;
+  // for updates
+  disablePublicSharing?: boolean;
+  allowViewerComments?: boolean;
 }
 
 interface IMembership {

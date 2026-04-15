@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as z from "zod";
+import { z } from "zod/v4";
 
 import { useForm } from "@mantine/form";
 import {
@@ -11,14 +11,14 @@ import {
   Box,
   Stack,
 } from "@mantine/core";
-import { zodResolver } from "mantine-form-zod-resolver";
+import { zod4Resolver } from "mantine-form-zod-resolver";
 import { useParams, useSearchParams } from "react-router-dom";
-import { IRegister } from "@/features/auth/types/auth.types";
 import useAuth from "@/features/auth/hooks/use-auth";
 import classes from "@/features/auth/components/auth.module.css";
 import { useGetInvitationQuery } from "@/features/workspace/queries/workspace-query.ts";
 import { useRedirectIfAuthenticated } from "@/features/auth/hooks/use-redirect-if-authenticated.ts";
 import { useTranslation } from "react-i18next";
+import { AuthLayout } from "./auth-layout.tsx";
 
 const formSchema = z.object({
   name: z.string().trim().min(1),
@@ -39,14 +39,14 @@ export function InviteSignUpForm() {
   useRedirectIfAuthenticated();
 
   const form = useForm<FormValues>({
-    validate: zodResolver(formSchema),
+    validate: zod4Resolver(formSchema),
     initialValues: {
       name: "",
       password: "",
     },
   });
 
-  async function onSubmit(data: IRegister) {
+  async function onSubmit(data: FormValues) {
     const invitationToken = searchParams.get("token");
 
     await invitationSignup({
@@ -66,6 +66,7 @@ export function InviteSignUpForm() {
   }
 
   return (
+    <AuthLayout>
     <Container size={420} className={classes.container}>
       <Box p="xl" className={classes.containerBox}>
         <Title order={2} ta="center" fw={500} mb="md">
@@ -109,5 +110,6 @@ export function InviteSignUpForm() {
         )}
       </Box>
     </Container>
+    </AuthLayout>
   );
 }

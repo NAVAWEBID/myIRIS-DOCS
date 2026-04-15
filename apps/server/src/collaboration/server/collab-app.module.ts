@@ -8,15 +8,24 @@ import { QueueModule } from '../../integrations/queue/queue.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { HealthModule } from '../../integrations/health/health.module';
 import { CollaborationController } from './collaboration.controller';
+import { LoggerModule } from '../../common/logger/logger.module';
+import { RedisModule } from '@nestjs-labs/nestjs-ioredis';
+import { RedisConfigService } from '../../integrations/redis/redis-config.service';
+import { CaslModule } from '../../core/casl/casl.module';
 
 @Module({
   imports: [
+    LoggerModule,
     DatabaseModule,
     EnvironmentModule,
+    CaslModule,
     CollaborationModule,
     QueueModule,
     HealthModule,
     EventEmitterModule.forRoot(),
+    RedisModule.forRootAsync({
+      useClass: RedisConfigService,
+    }),
   ],
   controllers: [
     AppController,

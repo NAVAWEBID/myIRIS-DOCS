@@ -12,6 +12,7 @@ import {
 import {
   searchSpotlight
 } from "@/features/search/constants.ts";
+import { NotificationPopover } from "@/features/notification/components/notification-popover.tsx";
 import APP_ROUTE from "@/lib/app-route.ts";
 import { Group, Text, Tooltip } from "@mantine/core";
 import { useAtom } from "jotai";
@@ -92,6 +93,7 @@ export function AppHeader() {
         </div>
 
         <Group px={"xl"} wrap="nowrap">
+          <NotificationPopover />
           <TopMenu />
         </Group>
       </Group>

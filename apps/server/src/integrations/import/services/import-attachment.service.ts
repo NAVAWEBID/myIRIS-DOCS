@@ -14,6 +14,7 @@ import { getAttachmentFolderPath } from '../../../core/attachment/attachment.uti
 import { AttachmentType } from '../../../core/attachment/attachment.constants';
 import { unwrapFromParagraph } from '../utils/import-formatter';
 import { resolveRelativeAttachmentPath } from '../utils/import.utils';
+import { imageDimensionsFromData } from 'image-dimensions';
 import { load } from 'cheerio';
 import pLimit from 'p-limit';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -53,7 +54,6 @@ export class ImportAttachmentService {
     fileTask: FileTask;
     attachmentCandidates: Map<string, string>;
     pageAttachments?: AttachmentInfo[];
-    isConfluenceImport?: boolean;
   }): Promise<string> {
     const {
       html,
@@ -63,7 +63,6 @@ export class ImportAttachmentService {
       fileTask,
       attachmentCandidates,
       pageAttachments = [],
-      isConfluenceImport,
     } = opts;
 
     const attachmentTasks: (() => Promise<void>)[] = [];
@@ -94,7 +93,6 @@ export class ImportAttachmentService {
     // Analyze attachments to identify Draw.io pairs
     const { drawioPairs, skipFiles } = this.analyzeAttachments(
       pageAttachments,
-      isConfluenceImport,
     );
 
     // Map to store processed Draw.io SVGs
@@ -189,13 +187,41 @@ export class ImportAttachmentService {
       }
     }
 
+    // Build a map from resolved archive path → real filename from Confluence
+    // metadata. Confluence Server archives often store files under numeric IDs
+    // (e.g. "attachments/65601/65602") instead of the original filename.
+    // Also register aliases so HTML references using the original filename
+    // (e.g. "attachments/pageId/original.mp3") resolve to the numeric path.
+    const pageDir = path.dirname(pageRelativePath);
+    const attachmentNameByRelPath = new Map<string, string>();
+    for (const attachment of pageAttachments) {
+      const relPath = resolveRelativeAttachmentPath(
+        attachment.href,
+        pageDir,
+        attachmentCandidates,
+      );
+      if (relPath && attachment.fileName) {
+        attachmentNameByRelPath.set(relPath, attachment.fileName);
+
+        const dir = path.posix.dirname(relPath);
+        const aliasKey = `${dir}/${attachment.fileName}`;
+        if (!attachmentCandidates.has(aliasKey)) {
+          attachmentCandidates.set(aliasKey, attachmentCandidates.get(relPath)!);
+          attachmentNameByRelPath.set(aliasKey, attachment.fileName);
+        }
+      }
+    }
+
     const uploadOnce = (relPath: string) => {
       const abs = attachmentCandidates.get(relPath)!;
       const attachmentId = v7();
-      const ext = path.extname(abs);
+
+      const realName = attachmentNameByRelPath.get(relPath);
+      const baseName = realName || path.basename(abs);
+      const ext = path.extname(baseName);
 
       const fileNameWithExt =
-        sanitizeFileName(path.basename(abs, ext)) + ext.toLowerCase();
+        sanitizeFileName(path.basename(baseName, ext)) + ext.toLowerCase();
 
       const storageFilePath = `${getAttachmentFolderPath(
         AttachmentType.File,
@@ -239,7 +265,6 @@ export class ImportAttachmentService {
       return fresh;
     };
 
-    const pageDir = path.dirname(pageRelativePath);
     const $ = load(html);
 
     // image
@@ -271,15 +296,37 @@ export class ImportAttachmentService {
         continue;
       }
 
-      const { attachmentId, apiFilePath } = processFile(relPath);
+      const { attachmentId, apiFilePath, abs } = processFile(relPath);
 
-      const width = $img.attr('width') ?? '100%';
+      let width = $img.attr('width');
+      const height = $img.attr('height');
       const align = $img.attr('data-align') ?? 'center';
+
+      if (!width) {
+        try {
+          const buf = await fs.readFile(abs);
+          const natural = imageDimensionsFromData(new Uint8Array(buf));
+          if (natural) {
+            width = height
+              ? String(
+                  Math.round((natural.width / natural.height) * Number(height)),
+                )
+              : String(natural.width);
+          }
+        } catch {
+          /* empty */
+        }
+
+        if (!width) {
+          width = '600';
+        }
+      }
 
       $img
         .attr('src', apiFilePath)
         .attr('data-attachment-id', attachmentId)
         .attr('width', width)
+        .attr('height', height)
         .attr('data-align', align);
 
       unwrapFromParagraph($, $img);
@@ -310,6 +357,28 @@ export class ImportAttachmentService {
         .attr('data-align', align);
 
       unwrapFromParagraph($, $vid);
+    }
+
+    // audio
+    for (const audEl of $('audio').toArray()) {
+      const $aud = $(audEl);
+      const src = cleanUrlString($aud.attr('src') ?? '')!;
+      if (!src || src.startsWith('http')) continue;
+
+      const relPath = resolveRelativeAttachmentPath(
+        src,
+        pageDir,
+        attachmentCandidates,
+      );
+      if (!relPath) continue;
+
+      const { attachmentId, apiFilePath } = processFile(relPath);
+
+      $aud
+        .attr('src', apiFilePath)
+        .attr('data-attachment-id', attachmentId);
+
+      unwrapFromParagraph($, $aud);
     }
 
     // <div data-type="attachment">
@@ -378,7 +447,18 @@ export class ImportAttachmentService {
       const { attachmentId, apiFilePath, abs } = processFile(relPath);
       const ext = path.extname(relPath).toLowerCase();
 
-      if (ext === '.mp4') {
+      const audioExtensions = new Set(['.mp3', '.wav', '.ogg', '.m4a', '.webm', '.flac', '.aac']);
+
+      if (ext === '.pdf') {
+        const $pdf = $('<div>')
+          .attr('data-type', 'pdf')
+          .attr('src', apiFilePath)
+          .attr('data-attachment-id', attachmentId)
+          .attr('width', '800')
+          .attr('height', '600');
+        $a.replaceWith($pdf);
+        unwrapFromParagraph($, $pdf);
+      } else if (ext === '.mp4') {
         const $video = $('<video>')
           .attr('src', apiFilePath)
           .attr('data-attachment-id', attachmentId)
@@ -386,10 +466,14 @@ export class ImportAttachmentService {
           .attr('data-align', 'center');
         $a.replaceWith($video);
         unwrapFromParagraph($, $video);
+      } else if (audioExtensions.has(ext)) {
+        const $audio = $('<audio>')
+          .attr('src', apiFilePath)
+          .attr('data-attachment-id', attachmentId);
+        $a.replaceWith($audio);
+        unwrapFromParagraph($, $audio);
       } else {
-        const confAliasName = $a.attr('data-linked-resource-default-alias');
-        let attachmentName = path.basename(abs);
-        if (confAliasName) attachmentName = confAliasName;
+        const attachmentName = path.basename(abs);
 
         const $div = $('<div>')
           .attr('data-type', 'attachment')
@@ -420,7 +504,7 @@ export class ImportAttachmentService {
         const { attachmentId, apiFilePath, abs } = processFile(relPath);
         const fileName = path.basename(abs);
 
-        const width = $oldDiv.attr('data-width') || '100%';
+        const width = $oldDiv.attr('data-width') || '600';
         const align = $oldDiv.attr('data-align') || 'center';
 
         const $newDiv = $('<div>')
@@ -460,7 +544,7 @@ export class ImportAttachmentService {
         .attr('data-type', 'drawio')
         .attr('data-src', drawioSvg.apiFilePath)
         .attr('data-title', 'diagram')
-        .attr('data-width', '100%')
+        .attr('data-width', '600')
         .attr('data-align', 'center')
         .attr('data-attachment-id', drawioSvg.attachmentId);
 
@@ -482,18 +566,31 @@ export class ImportAttachmentService {
         continue;
       }
 
-      // Check if already processed (was referenced in HTML)
-      if (processed.has(href)) {
-        continue;
-      }
+      // Resolve the metadata href to the actual archive path
+      const resolvedHref = resolveRelativeAttachmentPath(
+        href,
+        pageDir,
+        attachmentCandidates,
+      );
+      if (!resolvedHref) continue;
 
-      // Skip if the file doesn't exist
-      if (!attachmentCandidates.has(href)) {
+      // Check if already processed (was referenced in HTML).
+      // Inline elements may have been processed under an alias key (original
+      // filename) rather than the numeric archive path, so also check whether
+      // the underlying absolute file path has already been uploaded.
+      const absPath = attachmentCandidates.get(resolvedHref);
+      const alreadyProcessed =
+        processed.has(resolvedHref) ||
+        (absPath &&
+          Array.from(processed.values()).some(
+            (entry) => entry.abs === absPath,
+          ));
+      if (alreadyProcessed) {
         continue;
       }
 
       // This attachment was in the list but not referenced in HTML - add it
-      const { attachmentId, apiFilePath, abs } = processFile(href);
+      const { attachmentId, apiFilePath, abs } = processFile(resolvedHref);
       const mime = mimeType || getMimeType(abs);
 
       // Add as attachment node at the end
@@ -531,7 +628,9 @@ export class ImportAttachmentService {
 
     // Post-process DOM elements to add file sizes after uploads complete
     // This avoids blocking file operations during initial DOM processing
-    const elementsNeedingSize = $('[data-attachment-id]:not([data-size])');
+    const elementsNeedingSize = $(
+      '[data-attachment-id]:not([data-attachment-size]):not([data-size])',
+    );
     for (const element of elementsNeedingSize.toArray()) {
       const $el = $(element);
       const attachmentId = $el.attr('data-attachment-id');
@@ -545,7 +644,14 @@ export class ImportAttachmentService {
       if (processedEntry) {
         try {
           const stat = await fs.stat(processedEntry.abs);
-          $el.attr('data-size', stat.size.toString());
+          const sizeStr = stat.size.toString();
+          const tagName = $el.prop('tagName')?.toLowerCase();
+          // audio and pdf nodes use data-size, attachment nodes use data-attachment-size
+          if (tagName === 'audio' || $el.attr('data-type') === 'pdf') {
+            $el.attr('data-size', sizeStr);
+          } else {
+            $el.attr('data-attachment-size', sizeStr);
+          }
         } catch (error) {
           this.logger.debug(
             `Could not get size for ${processedEntry.abs}:`,
@@ -560,176 +666,11 @@ export class ImportAttachmentService {
 
   private analyzeAttachments(
     attachments: AttachmentInfo[],
-    isConfluenceImport?: boolean,
   ): {
     drawioPairs: Map<string, DrawioPair>;
     skipFiles: Set<string>;
   } {
-    const drawioPairs = new Map<string, DrawioPair>();
-    const skipFiles = new Set<string>();
-
-    if (!isConfluenceImport) {
-      return { drawioPairs, skipFiles };
-    }
-
-    // Group attachments by type
-    const drawioFiles: AttachmentInfo[] = [];
-    const pngByBaseName = new Map<string, AttachmentInfo[]>();
-
-    const nonDrawioExtensions = new Set([
-      '.png',
-      '.jpg',
-      '.jpeg',
-      '.gif',
-      '.svg',
-      '.txt',
-      '.pdf',
-      '.doc',
-      '.docx',
-      '.xls',
-      '.xlsx',
-      '.csv',
-      '.zip',
-      '.tar',
-      '.gz',
-    ]);
-
-    // Single pass through attachments
-    for (const attachment of attachments) {
-      const { fileName, mimeType, href } = attachment;
-      const fileNameLower = fileName.toLowerCase();
-
-      // Skip temporary files
-      if (fileName.endsWith('.tmp') || fileName.includes('~drawio~')) {
-        skipFiles.add(href);
-        continue;
-      }
-
-      // Check for Draw.io files
-      if (mimeType === 'application/vnd.jgraph.mxfile') {
-        const ext = fileNameLower.substring(fileNameLower.lastIndexOf('.'));
-        if (!nonDrawioExtensions.has(ext)) {
-          drawioFiles.push(attachment);
-        } else {
-          //Skipped non-Draw.io file with mxfile MIME.
-        }
-      }
-
-      if (mimeType === 'image/png' || fileNameLower.endsWith('.png')) {
-        const baseNames: string[] = [];
-
-        if (fileName.endsWith('.drawio.png')) {
-          // Cloud format: "name.drawio.png" -> base is "name"
-          baseNames.push(fileName.slice(0, -11)); // Remove .drawio.png
-        } else if (fileName.endsWith('.png')) {
-          // Server format: "name.png" -> base is "name"
-          baseNames.push(fileName.slice(0, -4)); // Remove .png
-        }
-
-        for (const baseName of baseNames) {
-          if (!pngByBaseName.has(baseName)) {
-            pngByBaseName.set(baseName, []);
-          }
-          pngByBaseName.get(baseName)!.push(attachment);
-        }
-      }
-    }
-
-    // Match Draw.io files with PNG counterparts
-    for (const drawio of drawioFiles) {
-      let baseName: string;
-
-      if (drawio.fileName.endsWith('.drawio')) {
-        baseName = drawio.fileName.slice(0, -7); // Remove .drawio
-      } else {
-        // Confluence Server: no extension
-        baseName = drawio.fileName;
-      }
-
-      const candidatePngs = pngByBaseName.get(baseName) || [];
-      let matchingPng: AttachmentInfo | undefined;
-
-      // Extract the attachment ID from the Draw.io href
-      // Format: attachments/16941088/36044817.png -> ID is 36044817
-      const drawioIdMatch = drawio.href.match(/\/(\d+)\.\w+$/);
-      const drawioId = drawioIdMatch ? drawioIdMatch[1] : null;
-
-      if (drawioId) {
-        // Look for PNG with adjacent ID (usually PNG ID = Draw.io ID + small increment)
-        // In Confluence, related files often have sequential or near-sequential IDs
-        for (const png of candidatePngs) {
-          const pngIdMatch = png.href.match(/\/(\d+)\.png$/);
-          const pngId = pngIdMatch ? pngIdMatch[1] : null;
-
-          //TODO: should revisit this
-          // but seem to be the best option for now
-          // to prevent reusing the first drawio preview image if there are more with the same name
-          if (pngId && drawioId) {
-            const idDiff = Math.abs(parseInt(pngId) - parseInt(drawioId));
-            // PNG is usually within ~30 IDs of the Draw.io file
-            if (idDiff <= 30) {
-              // Verify filename match
-              if (
-                png.fileName === `${baseName}.drawio.png` ||
-                (!drawio.fileName.endsWith('.drawio') &&
-                  png.fileName === `${baseName}.png`)
-              ) {
-                matchingPng = png;
-                break;
-              }
-            }
-          }
-        }
-      }
-
-      // Fallback to name-only matching if ID-based matching fails
-      if (!matchingPng) {
-        for (const png of candidatePngs) {
-          if (png.fileName === `${baseName}.drawio.png`) {
-            matchingPng = png;
-            break;
-          }
-          if (
-            !drawio.fileName.endsWith('.drawio') &&
-            png.fileName === `${baseName}.png`
-          ) {
-            matchingPng = png;
-            break;
-          }
-        }
-      }
-
-      if (matchingPng) {
-        this.logger.debug(
-          `Found Draw.io pair: ${drawio.fileName} -> ${matchingPng.fileName}`,
-        );
-      } else {
-        this.logger.debug(`No PNG found for Draw.io file: ${drawio.fileName}`);
-      }
-
-      const pair: DrawioPair = {
-        drawioFile: drawio,
-        pngFile: matchingPng,
-        baseName,
-      };
-
-      drawioPairs.set(drawio.href, pair);
-      skipFiles.add(drawio.href);
-      if (matchingPng) {
-        skipFiles.add(matchingPng.href);
-        // Remove the matched PNG from the candidates to prevent reuse
-        const remainingPngs = pngByBaseName
-          .get(baseName)
-          ?.filter((png) => png.href !== matchingPng.href);
-        if (remainingPngs && remainingPngs.length > 0) {
-          pngByBaseName.set(baseName, remainingPngs);
-        } else {
-          pngByBaseName.delete(baseName);
-        }
-      }
-    }
-
-    return { drawioPairs, skipFiles };
+    return { drawioPairs: new Map(), skipFiles: new Set() };
   }
 
   private async createDrawioSvg(

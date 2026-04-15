@@ -2,24 +2,28 @@ import { marked } from "marked";
 import { calloutExtension } from "./callout.marked";
 import { mathBlockExtension } from "./math-block.marked";
 import { mathInlineExtension } from "./math-inline.marked";
-import { typstBlockExtension } from "./typst-block.marked";
 import { columnContainerExtension } from "./column-container.marked";
 import { columnExtension } from "./column.marked";
 
 marked.use({
   renderer: {
-    // @ts-ignore
-    list(body: string, isOrdered: boolean, start: number) {
-      if (isOrdered) {
-        const startAttr = start !== 1 ? ` start="${start}"` : "";
-        return `<ol ${startAttr}>\n${body}</ol>\n`;
+    list({ ordered, start, items }) {
+      let body = "";
+      for (const item of items) {
+        body += this.listitem(item);
       }
 
-      const dataType = body.includes(`<input`) ? ' data-type="taskList"' : "";
+      if (ordered) {
+        const startAttr = start !== 1 ? ` start="${start}"` : "";
+        return `<ol${startAttr}>\n${body}</ol>\n`;
+      }
+
+      const isTaskList = items.some((item) => item.task);
+      const dataType = isTaskList ? ' data-type="taskList"' : "";
       return `<ul${dataType}>\n${body}</ul>\n`;
     },
-    // @ts-ignore
-    listitem({ text, raw, task: isTask, checked: isChecked }): string {
+    listitem({ tokens, task: isTask, checked: isChecked }) {
+      const text = this.parser.parse(tokens);
       if (!isTask) {
         return `<li>${text}</li>\n`;
       }
@@ -36,9 +40,8 @@ marked.use({
     calloutExtension,
     mathBlockExtension,
     mathInlineExtension,
-    typstBlockExtension,
     columnContainerExtension,
-    columnExtension
+    columnExtension,
   ],
 });
 

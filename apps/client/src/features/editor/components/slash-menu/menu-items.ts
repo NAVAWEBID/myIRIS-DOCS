@@ -14,9 +14,10 @@ import {
   IconListNumbers,
   IconMath,
   IconMathFunction,
-  IconMathSymbols,
   IconMovie,
+  IconMusic,
   IconPaperclip,
+  IconFileTypePdf,
   IconPhoto,
   IconTable,
   IconTypography,
@@ -26,7 +27,10 @@ import {
   IconSitemap,
   IconColumns,
   IconHeadphones,
-  IconFileTypePdf,
+  IconColumns3,
+  IconColumns2,
+  IconTag,
+  IconListTree,
 } from "@tabler/icons-react";
 
 import {
@@ -40,6 +44,8 @@ import { uploadAttachmentAction } from "@/features/editor/components/attachment/
 import IconExcalidraw from "@/components/icons/icon-excalidraw";
 import IconMermaid from "@/components/icons/icon-mermaid";
 import IconDrawio from "@/components/icons/icon-drawio";
+import { IconColumns4 } from "@/components/icons/icon-columns-4";
+import { IconColumns5 } from "@/components/icons/icon-columns-5";
 import {
   AirtableIcon,
   FigmaIcon,
@@ -208,12 +214,12 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     {
       title: "Image",
       description: "Upload any image from your device.",
-      searchTerms: ["photo", "picture", "media"],
+      searchTerms: ["photo", "picture", "media", "file", "attachment"],
       icon: IconPhoto,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload image
@@ -221,13 +227,18 @@ const CommandGroups: SlashMenuGroupedItemsType = {
         input.type = "file";
         input.accept = "image/*";
         input.multiple = true;
+        input.style.display = "none";
+        document.body.appendChild(input);
         input.onchange = async () => {
           if (input.files?.length) {
             for (const file of input.files) {
               const pos = editor.view.state.selection.from;
-              uploadImageAction(file, editor.view, pos, pageId);
+
+              uploadImageAction(file, editor, pos, pageId);
             }
           }
+
+          input.remove();
         };
         input.click();
       },
@@ -235,24 +246,31 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     {
       title: "Video",
       description: "Upload any video from your device.",
-      searchTerms: ["video", "mp4", "media"],
+      searchTerms: ["video", "mp4", "media", "file", "attachment"],
       icon: IconMovie,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload video
         const input = document.createElement("input");
         input.type = "file";
         input.accept = "video/*";
+        input.multiple = true;
+        input.style.display = "none";
+        document.body.appendChild(input);
         input.onchange = async () => {
           if (input.files?.length) {
-            const file = input.files[0];
-            const pos = editor.view.state.selection.from;
-            uploadVideoAction(file, editor.view, pos, pageId);
+            for (const file of input.files) {
+              const pos = editor.view.state.selection.from;
+
+              uploadVideoAction(file, editor, pos, pageId);
+            }
           }
+
+          input.remove();
         };
         input.click();
       },
@@ -265,7 +283,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload audio
@@ -276,7 +294,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
           if (input.files?.length) {
             const file = input.files[0];
             const pos = editor.view.state.selection.from;
-            uploadAudioAction(file, editor.view, pos, pageId);
+            uploadAudioAction(file, editor, pos, pageId);
           }
         };
         input.click();
@@ -290,7 +308,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload pdf
@@ -310,24 +328,31 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     {
       title: "File attachment",
       description: "Upload any file from your device.",
-      searchTerms: ["file", "attachment", "upload", "pdf", "csv", "zip"],
+      searchTerms: ["file", "attachment", "upload", "csv", "zip"],
       icon: IconPaperclip,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload file
         const input = document.createElement("input");
         input.type = "file";
         input.accept = "";
+        input.multiple = true;
+        input.style.display = "none";
+        document.body.appendChild(input);
         input.onchange = async () => {
           if (input.files?.length) {
-            const file = input.files[0];
-            const pos = editor.view.state.selection.from;
-            uploadAttachmentAction(file, editor.view, pos, pageId, true);
+            for (const file of input.files) {
+              const pos = editor.view.state.selection.from;
+
+              uploadAttachmentAction(file, editor, pos, pageId, true);
+            }
           }
+
+          input.remove();
         };
         input.click();
       },
@@ -424,14 +449,6 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }: CommandProps) =>
         editor.chain().focus().deleteRange(range).setMathBlock().run(),
     },
-      {
-        title: "Typst block",
-        description: "Insert Typst markup block.",
-        searchTerms: ["typst", "typeset", "markup", "document"],
-        icon: IconMathSymbols,
-        command: ({ editor, range }: CommandProps) =>
-          editor.chain().focus().deleteRange(range).setTypstBlock().run(),
-      },
     {
       title: "Mermaid diagram",
       description: "Insert mermaid diagram",
@@ -455,7 +472,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
         editor.chain().focus().deleteRange(range).setDrawio().run(),
     },
     {
-      title: "Excalidraw diagram",
+      title: "Excalidraw (Whiteboard)",
       description: "Draw and sketch excalidraw diagrams",
       searchTerms: ["diagrams", "draw", "sketch", "whiteboard"],
       icon: IconExcalidraw,
@@ -483,6 +500,29 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       },
     },
     {
+      title: "Status",
+      description: "Insert inline status badge.",
+      searchTerms: ["status", "badge", "label", "lozenge"],
+      icon: IconTag,
+      command: ({ editor, range }: CommandProps) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .setStatus({ text: "", color: "gray" })
+          .run();
+      },
+    },
+    {
+      title: "Table of contents",
+      description: "Insert a table of contents block.",
+      searchTerms: ["toc", "table of contents", "outline", "headings", "navigation"],
+      icon: IconListTree,
+      command: ({ editor, range }: CommandProps) => {
+        editor.chain().focus().deleteRange(range).insertTocNode().run();
+      },
+    },
+    {
       title: "Subpages (Child pages)",
       description: "List all subpages of the current page",
       searchTerms: ["subpages", "child", "children", "nested", "hierarchy"],
@@ -490,6 +530,58 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }: CommandProps) => {
         editor.chain().focus().deleteRange(range).insertSubpages().run();
       },
+    },
+    {
+      title: "2 Columns",
+      description: "Split content into two columns.",
+      searchTerms: ["columns", "layout", "split", "side"],
+      icon: IconColumns2,
+      command: ({ editor, range }: CommandProps) =>
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertColumns({ layout: "two_equal" })
+          .run(),
+    },
+    {
+      title: "3 Columns",
+      description: "Split content into three columns.",
+      searchTerms: ["columns", "layout", "split", "triple"],
+      icon: IconColumns3,
+      command: ({ editor, range }: CommandProps) =>
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertColumns({ layout: "three_equal" })
+          .run(),
+    },
+    {
+      title: "4 Columns",
+      description: "Split content into four columns.",
+      searchTerms: ["columns", "layout", "split"],
+      icon: IconColumns4,
+      command: ({ editor, range }: CommandProps) =>
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertColumns({ layout: "four_equal" })
+          .run(),
+    },
+    {
+      title: "5 Columns",
+      description: "Split content into five columns.",
+      searchTerms: ["columns", "layout", "split"],
+      icon: IconColumns5,
+      command: ({ editor, range }: CommandProps) =>
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertColumns({ layout: "five_equal" })
+          .run(),
     },
     {
       title: "Iframe embed",
@@ -578,7 +670,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     {
       title: "YouTube",
       description: "Embed YouTube video",
-      searchTerms: ["youtube", "yt"],
+      searchTerms: ["youtube", "yt", "media", "video"],
       icon: YoutubeIcon,
       command: ({ editor, range }: CommandProps) => {
         editor
@@ -677,7 +769,11 @@ export const getSuggestionItems = ({
     });
 
     if (filteredItems.length) {
-      filteredGroups[group] = filteredItems;
+      filteredGroups[group] = filteredItems.sort((a, b) => {
+        const aTitle = a.title.toLowerCase().includes(search) ? 0 : 1;
+        const bTitle = b.title.toLowerCase().includes(search) ? 0 : 1;
+        return aTitle - bTitle;
+      });
     }
   }
 

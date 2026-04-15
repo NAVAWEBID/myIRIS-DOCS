@@ -1,7 +1,7 @@
-import * as z from "zod";
-import { useForm, zodResolver } from "@mantine/form";
+import { z } from "zod/v4";
+import { useForm } from "@mantine/form";
+import { zod4Resolver } from "mantine-form-zod-resolver";
 import useAuth from "@/features/auth/hooks/use-auth";
-import { ILogin } from "@/features/auth/types/auth.types";
 import {
   Container,
   Title,
@@ -25,14 +25,15 @@ import React, { useEffect } from "react";
 import { OidcButton } from "@/features/auth/components/oidc-button";
 import { useOidcConfigQuery } from "@/features/auth/queries/oidc-query";
 import { useOidcAuth } from "@/features/auth/hooks/use-oidc-auth";
+import { AuthLayout } from "./auth-layout.tsx";
 
 const formSchema = z.object({
   email: z
-    .string()
-    .min(1, { message: "email is required" })
-    .email({ message: "Invalid email address" }),
+    .email()
+    .min(1, { message: "email is required" }),
   password: z.string().min(1, { message: "Password is required" }),
 });
+type FormValues = z.infer<typeof formSchema>;
 
 export function LoginForm() {
   const { t } = useTranslation();
@@ -47,15 +48,15 @@ export function LoginForm() {
   } = useWorkspacePublicDataQuery();
   const { data: oidcConfig } = useOidcConfigQuery();
 
-  const form = useForm<ILogin>({
-    validate: zodResolver(formSchema),
+  const form = useForm<FormValues>({
+    validate: zod4Resolver(formSchema),
     initialValues: {
       email: "",
       password: "",
     },
   });
 
-  async function onSubmit(data: ILogin) {
+  async function onSubmit(data: FormValues) {
     await signIn(data);
   }
 
@@ -77,11 +78,12 @@ export function LoginForm() {
   const hasOidcProvider = data?.authProviders?.some((provider: any) => provider.type === 'oidc');
 
   return (
-    <Container size={420} className={classes.container}>
-      <Box p="xl" className={classes.containerBox}>
-        <Title order={2} ta="center" fw={500} mb="md">
-          {t("Login")}
-        </Title>
+    <AuthLayout>
+      <Container size={420} className={classes.container}>
+        <Box p="xl" className={classes.containerBox}>
+          <Title order={2} ta="center" fw={500} mb="md">
+            {t("Login")}
+          </Title>
 
         <Stack gap="md">
           {hasOidcProvider && (
@@ -129,5 +131,6 @@ export function LoginForm() {
         </Stack>
       </Box>
     </Container>
+    </AuthLayout>
   );
 }

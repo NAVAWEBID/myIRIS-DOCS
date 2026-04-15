@@ -1,9 +1,9 @@
 # myIRIS DOCS
 
-> [!NOTE]
-> This is a custom, updated fork of Docmost, optimized for personal and educational use, especially for sharing with multiple different users. It also includes features that Docmost is either "too" slow to add or chooses not to include, sometimes because they are behind a paywall or because Docmost aims to "keep it simple." (No judgment)
->
-> I cannot promise that I will keep maintaining this fork forever as I primarily do it for myself, but I will do so as long as the license allows and I actively use Docmost. I have also taken out some features that others might find helpful, and I may have added some bugs. As per license this can be forked at any time
+> [!IMPORTANT] 
+> This repo is now EOL. No new updates will be added. Anyone is free to fork this software. Thanks to everyone who contributed to this software. I especially thank:
+> - [@hugokindel](https://github.com/hugokindel) for adding many new features, and also helping update this fork
+> - [@Philipinho](https://github.com/Philipinho) for the initial free software
 
 > [!IMPORTANT]
 > Everything is my opinion!\
@@ -21,6 +21,9 @@
 > There is nothing wrong with paying for a product; developers need to earn money somehow. But hiding basic security features behind a paywall that isn't visible unless you contact the team to get some unclear pricing that could change anytime or differ between people is simply wrong, especially when you host it on your own servers.
 >
 > This won't be an option for everyone, but I switched to Typst for regular document writing. I'm still searching for a better alternative for collab and will maintain this project until I find one. After that, I'll keep maintaining the fork for a few more months to support future releases. If someone wants to further maintain the project, please contact me.
+
+> [!NOTE]
+> The upstream maintainer currently uses [Typst](https://typst.app/play/), which is not WYSIWYG but offers many more customization options. There is also an online editor for sharing work, and it has wide community support, including for the web.
 
 ## **For added and features merged ahead, see the note under Features.**
 
@@ -129,10 +132,15 @@ List as follows[^1]:
 </details>
 
 [^2]: Do not use if you plan to revert to upstream in the future. This is added to features that are not in upstream at the moment or never will. You should be able to always go back to upstream, but used blocks e.g. then are lost and not recoverable.
+
 [^3]: Force saving will save directly to the database
+
 [^4]: Clicking default colors automatically applies highlight color to make it easier to use
+
 [^5]: The Table of Contents (ToC) only displays the first 3 levels of headings.
+
 [^6]: The UI for copying redesigned; scrolling is now faster.
+
 [^7]: Updated UI and shortcuts for find and replace and better UX - Focus
 
 <br>
@@ -150,6 +158,8 @@ Enterprise features (meaning the code not the features itself) from upstream are
 See the [development documentation](https://docmost.com/docs/self-hosting/development) of Docmost which myIRIS Docs follows
 
 ## Thanks
+
+Major thanks to [@hugokindel](https://github.com/hugokindel) who contributed to better OIDC workflows, many QoL features, and helped massively with upgrading forkmost to the latest upstream version.
 
 Major thanks to [@fuscodev](https://github.com/fuscodev), who contributed their changes from upstream themselves. Also, many pull requests I merged are based on their work.
 

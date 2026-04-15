@@ -1,5 +1,6 @@
 import { AvatarIconType } from "@/features/attachments/types/attachment.types.ts";
 import { castToBoolean } from "@/lib/utils.tsx";
+import { sanitizeUrl } from "@docmost/editor-ext";
 import bytes from "bytes";
 
 declare global {
@@ -71,7 +72,7 @@ export function getFileUrl(src: string) {
   if (src.startsWith("/files/")) {
     return getBackendUrl() + src;
   }
-  return src;
+  return sanitizeUrl(src);
 }
 
 export function getFileUploadSizeLimit() {
@@ -108,5 +109,9 @@ function getConfigValue(key: string, defaultValue: string = undefined): string {
   const rawValue = import.meta.env.DEV
     ? process?.env?.[key]
     : window?.CONFIG?.[key];
-  return rawValue ?? defaultValue;
+  if (rawValue === undefined || rawValue === null || rawValue === "") {
+    return defaultValue;
+  }
+
+  return rawValue;
 }

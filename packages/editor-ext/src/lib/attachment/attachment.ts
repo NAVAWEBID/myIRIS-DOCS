@@ -1,6 +1,6 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { AttachmentUploadPlugin } from "./attachment-upload";
+import { sanitizeUrl } from "../utils";
 
 export interface AttachmentOptions {
   HTMLAttributes: Record<string, any>;
@@ -13,6 +13,7 @@ export interface AttachmentAttributes {
   mime?: string; // e.g. application/zip
   size?: number;
   attachmentId?: string;
+  placeholder?: string;
 }
 
 declare module "@tiptap/core" {
@@ -42,9 +43,12 @@ export const Attachment = Node.create<AttachmentOptions>({
     return {
       url: {
         default: "",
-        parseHTML: (element) => element.getAttribute("data-attachment-url"),
+        parseHTML: (element) => {
+          const url = element.getAttribute("data-attachment-url");
+          return sanitizeUrl(url);
+        },
         renderHTML: (attributes) => ({
-          "data-attachment-url": attributes.url,
+          "data-attachment-url": sanitizeUrl(attributes.url),
         }),
       },
       name: {
@@ -75,6 +79,10 @@ export const Attachment = Node.create<AttachmentOptions>({
           "data-attachment-id": attributes.attachmentId,
         }),
       },
+      placeholder: {
+        default: null,
+        rendered: false,
+      },
     };
   },
 
@@ -92,12 +100,12 @@ export const Attachment = Node.create<AttachmentOptions>({
       mergeAttributes(
         { "data-type": this.name },
         this.options.HTMLAttributes,
-        HTMLAttributes,
+        HTMLAttributes
       ),
       [
         "a",
         {
-          href: HTMLAttributes["data-attachment-url"],
+          href: sanitizeUrl(HTMLAttributes["data-attachment-url"]),
           class: "attachment",
           target: "blank",
         },
@@ -120,14 +128,9 @@ export const Attachment = Node.create<AttachmentOptions>({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(this.options.view);
-  },
+    // Force the react node view to render immediately using flush sync (https://github.com/ueberdosis/tiptap/blob/b4db352f839e1d82f9add6ee7fb45561336286d8/packages/react/src/ReactRenderer.tsx#L183-L191)
+    this.editor.isInitialized = true;
 
-  addProseMirrorPlugins() {
-    return [
-      AttachmentUploadPlugin({
-        placeholderClass: "attachment-placeholder",
-      }),
-    ];
+    return ReactNodeViewRenderer(this.options.view);
   },
 });
